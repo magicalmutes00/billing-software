@@ -19,7 +19,7 @@ services:
         # Optional: separate non-owner RLS role. Leave empty to use DATABASE_URL for everything.
         value: ""
       - key: JWT_SECRET
-        generate: true
+        value: change-me-to-a-long-random-string-at-least-32-bytes
       - key: ACCESS_TOKEN_MINUTES
         value: "15"
       - key: REFRESH_TOKEN_DAYS
@@ -29,7 +29,7 @@ services:
       - key: PAYMENT_PROVIDER
         value: stub
       - key: WEBHOOK_SECRET
-        generate: true
+        value: change-me-to-a-long-random-webhook-secret
       - key: CORS_ORIGINS
         # Set to your frontend URL after deploy, e.g. https://billing-frontend.onrender.com
         value: ""
