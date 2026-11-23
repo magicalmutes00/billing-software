@@ -1,0 +1,10 @@
+.env
+*.db
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+storage/
+tests/
+smoke_api.py

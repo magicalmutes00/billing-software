@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[c]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+billing.db
+test_billing.db
+
+# Build / dist
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Node / frontend
+node_modules/
+.next/
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

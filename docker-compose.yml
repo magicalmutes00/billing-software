@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+      POSTGRES_DB: billing
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing -d billing"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  backend:
+    build: ./backend
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://billing:billing@postgres:5432/billing
+      APP_DATABASE_URL: postgresql+asyncpg://billing_app:billing_app@postgres:5432/billing
+      JWT_SECRET: compose-dev-secret-change-me-please-32bytes
+      ACCESS_TOKEN_MINUTES: 15
+      REFRESH_TOKEN_DAYS: 7
+      PORTAL_TOKEN_HOURS: 24
+      PAYMENT_PROVIDER: stub
+      WEBHOOK_SECRET: compose-webhook-secret-change-me
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: ./storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ["8010:8000"]
+    command: >
+      sh -c "alembic upgrade head && python seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports: ["5173:80"]
+
+volumes:
+  pgdata:
