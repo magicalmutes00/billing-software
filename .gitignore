@@ -23,6 +23,9 @@ test_billing.db
 # Build / dist
 dist/
 build/
+# The Voroa frontend is a static service that does not run our Dockerfile, so
+# the production bundle is committed for it to serve directly.
+!frontend/dist/
 *.egg-info/
 .eggs/
 
