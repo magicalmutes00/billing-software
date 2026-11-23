@@ -15,4 +15,5 @@ COPY seed.py ./seed.py
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Render provides $PORT. Run migrations, seed, then start uvicorn.
+CMD ["sh", "-c", "alembic upgrade head && python seed.py && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
