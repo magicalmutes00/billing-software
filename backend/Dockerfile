@@ -15,5 +15,7 @@ COPY seed.py ./seed.py
 
 EXPOSE 8000
 
-# Render provides $PORT. Run migrations, seed, then start uvicorn.
-CMD ["sh", "-c", "alembic upgrade head && python seed.py && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Hosts provide $PORT. Start the web process immediately so health checks pass;
+# migrations and seed run in the background (they can take minutes over a
+# remote database, which would otherwise exceed the platform startup window).
+CMD ["sh", "-c", "(alembic upgrade head && python seed.py) & exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

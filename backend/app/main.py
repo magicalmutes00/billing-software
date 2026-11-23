@@ -11,19 +11,19 @@ from app.core.config import get_settings
 from app.core.context import actor_id_var, tenant_id_var
 from app.core.errors import ApiError, api_error_handler
 from app.core.security import decode_token
-from app.db.session import get_db, init_db
+from app.db.session import get_db
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    await init_db()
-    from app.db.session import AdminSessionLocal
-    from app.services.auth_service import sync_all_tenants
-
-    async with AdminSessionLocal() as session:
-        await sync_all_tenants(session)
+    # Migrations and seeding run before uvicorn in local dev, but on hosted
+    # platforms (Voroa/Render) they can take longer than the health-check
+    # startup window because of database latency. seed.py already calls
+    # init_db() and sync_all_tenants(), so keep app startup DB-free: the web
+    # process can pass /health immediately while the background migration job
+    # finishes. Local tests create their schema directly in conftest.py.
     yield
 
 
