@@ -11,13 +11,6 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
-      - key: DATABASE_URL
-        # SET THIS after deploy: your Neon connection string with postgresql+asyncpg://
-        # Example: postgresql+asyncpg://neondb_owner:npg_xxx@ep-xxx.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-        value: ""
-      - key: APP_DATABASE_URL
-        # Optional: separate non-owner RLS role. Leave empty to use DATABASE_URL for everything.
-        value: ""
       - key: JWT_SECRET
         value: change-me-to-a-long-random-string-at-least-32-bytes
       - key: ACCESS_TOKEN_MINUTES
@@ -30,14 +23,8 @@ services:
         value: stub
       - key: WEBHOOK_SECRET
         value: change-me-to-a-long-random-webhook-secret
-      - key: CORS_ORIGINS
-        # Set to your frontend URL after deploy, e.g. https://billing-frontend.onrender.com
-        value: ""
       - key: STORAGE_DIR
         value: ./storage
-      - key: REDIS_URL
-        # Not required by the app. Set only if you add Redis later.
-        value: ""
     healthCheckPath: /health
     autoDeploy: true
 
@@ -50,8 +37,4 @@ services:
     branch: main
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
-    envVars:
-      - key: BACKEND_URL
-        # SET THIS after deploy: your backend URL, e.g. https://billing-backend.onrender.com
-        value: ""
     autoDeploy: true
