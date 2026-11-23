@@ -8,19 +8,16 @@ services:
     branch: main
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    startCommand: sh -c "alembic upgrade head && python seed.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        # SET THIS: Your Neon connection string with postgresql+asyncpg://
+        # SET THIS after deploy: your Neon connection string with postgresql+asyncpg://
         # Example: postgresql+asyncpg://neondb_owner:npg_xxx@ep-xxx.aws.neon.tech/neondb?sslmode=require&channel_binding=require
         value: ""
-        sync: false
       - key: APP_DATABASE_URL
         # Optional: separate non-owner RLS role. Leave empty to use DATABASE_URL for everything.
         value: ""
-        sync: false
       - key: JWT_SECRET
         generate: true
       - key: ACCESS_TOKEN_MINUTES
@@ -36,13 +33,11 @@ services:
       - key: CORS_ORIGINS
         # Set to your frontend URL after deploy, e.g. https://billing-frontend.onrender.com
         value: ""
-        sync: false
       - key: STORAGE_DIR
         value: ./storage
       - key: REDIS_URL
         # Not required by the app. Set only if you add Redis later.
         value: ""
-        sync: false
     healthCheckPath: /health
     autoDeploy: true
 
@@ -57,8 +52,6 @@ services:
     dockerContext: ./frontend
     envVars:
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: billing-backend
-          property: url
+        # SET THIS after deploy: your backend URL, e.g. https://billing-backend.onrender.com
+        value: ""
     autoDeploy: true
