@@ -1,6 +1,7 @@
 from functools import lru_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,12 +10,12 @@ class Settings(BaseSettings):
 
     app_name: str = "Billing API"
     environment: str = "dev"
-    # Some hosts cannot overwrite an existing secret through their API. Allow a
-    # fresh variable name to take precedence so a rotated database password can
-    # be deployed without deleting and recreating the service.
+    # Managed hosts usually inject DATABASE_URL with the legacy `postgres://`
+    # scheme. SQLAlchemy 2.x needs an explicit driver, and asyncpg does not
+    # accept libpq-only query parameters, so normalise both here.
     database_url: str = Field(
         default="sqlite+aiosqlite:///./billing.db",
-        validation_alias=AliasChoices("PRIMARY_DATABASE_URL", "DATABASE_URL"),
+        validation_alias=AliasChoices("MANAGED_DATABASE_URL", "DATABASE_URL", "PRIMARY_DATABASE_URL"),
     )
     # Runtime app connection. When set (PostgreSQL), use a NON-owner role so RLS
     # policies are enforced. database_url stays the owner role for migrations/seed.
@@ -30,6 +31,26 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     redis_url: str = "redis://localhost:6379/0"
     storage_dir: str = "./storage"
+
+    @model_validator(mode="after")
+    def normalize_database_url(self) -> "Settings":
+        url = self.database_url.strip()
+        parts = urlsplit(url)
+        if parts.scheme in {"postgres", "postgresql", "postgresql+asyncpg"}:
+            query = [
+                (key, value)
+                for key, value in parse_qsl(parts.query, keep_blank_values=True)
+                if key not in {"sslmode", "channel_binding"}
+            ]
+            url = urlunsplit((
+                "postgresql+asyncpg",
+                parts.netloc,
+                parts.path,
+                urlencode(query),
+                parts.fragment,
+            ))
+        self.database_url = url
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:
