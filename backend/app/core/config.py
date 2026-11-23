@@ -28,7 +28,10 @@ class Settings(BaseSettings):
     portal_token_hours: int = 24
     payment_provider: str = "stub"
     webhook_secret: str = "dev-webhook-secret"
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        validation_alias=AliasChoices("CORS_ORIGINS_V2", "CORS_ORIGINS"),
+    )
     redis_url: str = "redis://localhost:6379/0"
     storage_dir: str = "./storage"
 
