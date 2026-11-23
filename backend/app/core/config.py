@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,7 +9,13 @@ class Settings(BaseSettings):
 
     app_name: str = "Billing API"
     environment: str = "dev"
-    database_url: str = "sqlite+aiosqlite:///./billing.db"
+    # Some hosts cannot overwrite an existing secret through their API. Allow a
+    # fresh variable name to take precedence so a rotated database password can
+    # be deployed without deleting and recreating the service.
+    database_url: str = Field(
+        default="sqlite+aiosqlite:///./billing.db",
+        validation_alias=AliasChoices("PRIMARY_DATABASE_URL", "DATABASE_URL"),
+    )
     # Runtime app connection. When set (PostgreSQL), use a NON-owner role so RLS
     # policies are enforced. database_url stays the owner role for migrations/seed.
     # Defaults to database_url (SQLite dev/test, where RLS is a no-op).
