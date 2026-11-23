@@ -1,0 +1,49 @@
+version: 1
+
+services:
+  # Backend API (FastAPI) — Docker runtime
+  - name: billing-backend
+    type: web
+    rootDir: ./backend
+    runtime: dockerfile
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        # SET THIS: your Neon connection string with postgresql+asyncpg:// and ssl=require
+        value: ""
+      - key: APP_DATABASE_URL
+        # Optional: separate non-owner RLS role
+        value: ""
+      - key: JWT_SECRET
+        value: change-me-to-a-long-random-string-at-least-32-bytes
+      - key: ACCESS_TOKEN_MINUTES
+        value: "15"
+      - key: REFRESH_TOKEN_DAYS
+        value: "7"
+      - key: PORTAL_TOKEN_HOURS
+        value: "24"
+      - key: PAYMENT_PROVIDER
+        value: stub
+      - key: WEBHOOK_SECRET
+        value: change-me-to-a-long-random-webhook-secret
+      - key: CORS_ORIGINS
+        # SET THIS after frontend deploy: https://billing-frontend.onvoroa.com
+        value: ""
+      - key: STORAGE_DIR
+        value: ./storage
+      - key: REDIS_URL
+        value: ""
+
+  # Frontend (React + Vite) — web service runtime, Voroa builds and serves dist
+  - name: billing-frontend
+    type: web
+    rootDir: ./frontend
+    # No runtime specified → Voroa auto-detects Node.js, runs npm ci + npm run build,
+    # and serves the dist folder with client-side route fallback.
+    envVars:
+      - key: VITE_BACKEND_URL
+        # SET THIS after backend deploy: https://billing-backend.onvoroa.com
+        value: ""

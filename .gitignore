@@ -30,6 +30,7 @@ build/
 node_modules/
 .next/
 .turbo/
+*.tsbuildinfo
 
 # IDE
 .vscode/

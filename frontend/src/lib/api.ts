@@ -4,7 +4,19 @@ export const ACCESS_KEY = 'billing_access';
 export const REFRESH_KEY = 'billing_refresh';
 export const PORTAL_KEY = 'billing_portal';
 
-const client = axios.create({ baseURL: '/api/v1', headers: { 'Content-Type': 'application/json' } });
+// On Voroa/Render the built frontend may be served from a different origin than
+// the API. VITE_BACKEND_URL is baked in at build time; when it is absent the app
+// falls back to same-origin /api/v1 (docker-compose + nginx proxy).
+const configuredBackend = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.trim().replace(/\/+$/, '');
+
+export const API_BASE = configuredBackend ? `${configuredBackend}/api/v1` : '/api/v1';
+
+function resolveApiUrl(url: string): string {
+  if (!configuredBackend || !url.startsWith('/api/')) return url;
+  return `${configuredBackend}${url}`;
+}
+
+const client = axios.create({ baseURL: API_BASE, headers: { 'Content-Type': 'application/json' } });
 
 client.interceptors.request.use((config) => {
   const isPortal = (config.url || '').startsWith('/portal/');
@@ -35,7 +47,7 @@ export function apiErrorMessage(error: unknown): string {
 /** Fetch a raw (non-envelope) authenticated response body as text, e.g. SVG QR. */
 export async function apiText(path: string): Promise<string> {
   const token = localStorage.getItem(ACCESS_KEY) || localStorage.getItem(PORTAL_KEY);
-  const res = await fetch(`/api/v1${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const res = await fetch(resolveApiUrl(`/api/v1${path}`), { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.text();
 }
@@ -53,7 +65,7 @@ export function clearTokens() {
 /** Fetch an HTML document with the bearer token and print it in a new window. */
 export async function printAuthenticatedHtml(url: string): Promise<void> {
   const token = localStorage.getItem(ACCESS_KEY) || localStorage.getItem(PORTAL_KEY);
-  const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const res = await fetch(resolveApiUrl(url), { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   if (!res.ok) {
     throw new Error(`Print failed (${res.status})`);
   }
