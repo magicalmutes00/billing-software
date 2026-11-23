@@ -1,22 +1,9 @@
 services:
-  # Managed PostgreSQL on Render
-  - type: postgresql
-    name: billing-db
-    plan: starter
-    databaseName: billing
-    user: billing
-
-  # Managed Redis on Render
-  - type: redis
-    name: billing-redis
-    plan: starter
-    maxmemoryPolicy: allkeys-lru
-
-  # Backend API (FastAPI)
+  # Backend API (FastAPI) — Render free web tier
   - type: web
     name: billing-backend
     env: docker
-    plan: starter
+    plan: free
     region: oregon
     branch: main
     dockerfilePath: ./backend/Dockerfile
@@ -26,14 +13,12 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        # AFTER creating the billing-db service on Render, copy its connection string
-        # from the Render dashboard, replace "postgresql://" with "postgresql+asyncpg://",
-        # and set it here as the DATABASE_URL value.
+        # SET THIS: Your Neon connection string with postgresql+asyncpg://
+        # Example: postgresql+asyncpg://neondb_owner:npg_xxx@ep-xxx.aws.neon.tech/neondb?sslmode=require&channel_binding=require
         value: ""
         sync: false
       - key: APP_DATABASE_URL
-        # Optional: set only if you want a separate non-owner RLS role.
-        # Otherwise unset and the app uses DATABASE_URL for everything.
+        # Optional: separate non-owner RLS role. Leave empty to use DATABASE_URL for everything.
         value: ""
         sync: false
       - key: JWT_SECRET
@@ -49,19 +34,15 @@ services:
       - key: WEBHOOK_SECRET
         generate: true
       - key: CORS_ORIGINS
-        # Set this to your frontend URL after it is deployed, e.g.
-        # https://billing-frontend.onrender.com
-        # (Optional: the frontend proxies /api through nginx, so same-origin calls
-        #  don't need CORS. Set this only if you call the backend API directly.)
+        # Set to your frontend URL after deploy, e.g. https://billing-frontend.onrender.com
         value: ""
         sync: false
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: billing-redis
-          property: connectionString
       - key: STORAGE_DIR
         value: ./storage
+      - key: REDIS_URL
+        # Not required by the app. Set only if you add Redis later.
+        value: ""
+        sync: false
     healthCheckPath: /health
     autoDeploy: true
 
@@ -69,7 +50,7 @@ services:
   - type: web
     name: billing-frontend
     env: docker
-    plan: starter
+    plan: free
     region: oregon
     branch: main
     dockerfilePath: ./frontend/Dockerfile
